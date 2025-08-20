@@ -99,7 +99,7 @@ class Storage:
     def save(self) -> None:
         try:
             with open(self.storagepath, 'w') as f:
-                json.dump(self._data, f)
+                json.dump(self._data, f, indent=4)
         except OSError as e:
             raise RuntimeError('ERROR: Could not write storage file.') from e
 
