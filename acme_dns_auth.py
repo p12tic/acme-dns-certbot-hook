@@ -2,24 +2,47 @@
 import json
 import os
 import sys
+from dataclasses import dataclass
 from typing import Any
 
 import requests
 
-### EDIT THESE: Configuration values ###
+DATA_STORAGE_PATH = '/etc/letsencrypt/acme-dns-certbot-hook-data.json'
+CONFIG_FILE_PATH = '/etc/letsencrypt/acme-dns-certbot-hook-config.json'
 
-# URL to acme-dns instance
-ACMEDNS_URL = 'https://auth.acme-dns.io'
-# Path for acme-dns credential storage
-STORAGE_PATH = '/etc/letsencrypt/acmedns.json'
-# Whitelist for address ranges to allow the updates from
-# Example: ALLOW_FROM = ["192.168.10.0/24", "::1/128"]
-ALLOW_FROM: list[str] = []
-# Force re-registration. Overwrites the already existing acme-dns accounts.
-FORCE_REGISTER = False
 
-###   DO NOT EDIT BELOW THIS POINT   ###
-###         HERE BE DRAGONS          ###
+@dataclass
+class AcmeDnsConfig:
+    url: str
+    allow_from: list[str]
+    force_register: bool
+
+
+def build_acme_dns_config_from_env(config_file_path: str) -> AcmeDnsConfig:
+    acmedns_url = os.environ.get('ACMEDNS_URL')
+
+    try:
+        if acmedns_url is not None:
+            return AcmeDnsConfig(
+                url=acmedns_url,
+                allow_from=json.loads(os.environ.get('ACMEDNS_ALLOW_FROM', '[]')),
+                force_register=json.loads(os.environ.get('ACMEDNS_FORCE_REGISTER', 'false')),
+            )
+
+        with open(config_file_path) as f:
+            config_data = json.load(f)
+
+        return AcmeDnsConfig(
+            url=config_data.get('url'),
+            allow_from=config_data.get('allow_from', []),
+            force_register=config_data.get('force_register', False),
+        )
+    except FileNotFoundError:
+        raise RuntimeError(
+            'ERROR: No configuration supplied either via environment variables nor config file'
+        )
+    except (json.JSONDecodeError, KeyError) as e:
+        raise RuntimeError(f'ERROR: Invalid configuration in {config_file_path}: {str(e)}')
 
 
 class AcmeDnsClient:
@@ -127,15 +150,17 @@ def main() -> None:
         validation_domain = '_acme-challenge.' + domain
         validation_token = os.environ['CERTBOT_VALIDATION']
 
+        config = build_acme_dns_config_from_env(CONFIG_FILE_PATH)
+
         # Init
-        client = AcmeDnsClient(ACMEDNS_URL)
-        storage = Storage(STORAGE_PATH)
+        client = AcmeDnsClient(config.url)
+        storage = Storage(DATA_STORAGE_PATH)
 
         # Check if an account already exists in storage
         account = storage.fetch(domain)
-        if FORCE_REGISTER or not account:
+        if config.force_register or not account:
             # Create and save the new account
-            account = client.register_account(ALLOW_FROM)
+            account = client.register_account(config.allow_from)
             storage.put(domain, account)
             storage.save()
 

@@ -14,30 +14,33 @@ Requires Certbot >= 0.10, Python requests library.
 
 3) Download the authentication hook script and make it executable:
 ```
-$ curl -o /etc/letsencrypt/acme-dns-auth.py https://raw.githubusercontent.com/p12tic/acme-dns-certbot-hook/master/acme-dns-auth.py
-$ chmod 0700 /etc/letsencrypt/acme-dns-auth.py
+$ curl -o /etc/letsencrypt/acme_dns_auth.py https://raw.githubusercontent.com/p12tic/acme-dns-certbot-hook/master/acme_dns_auth.py
+$ chmod 0700 /etc/letsencrypt/acme_dns_auth.py
 ```
 
-4) Configure the variables in the beginning of the hook script file to point to your acme-dns instance. The only value that you must change is the `ACMEDNS_URL`, other values are optional.
-```
-### EDIT THESE: Configuration values ###
+4) Configure the hook script file to point to your acme-dns instance. Either put configuration file at `/etc/letsencrypt/acme-dns-certbot-hook-config.json`, or pass configuration via environment variables. Example contents of `/etc/letsencrypt/acme-dns-certbot-hook-config.json`:
 
-# URL to acme-dns instance
-ACMEDNS_URL = "https://auth.acme-dns.io"
-# Path for acme-dns credential storage
-STORAGE_PATH = "/etc/letsencrypt/acmedns.json"
-# Whitelist for address ranges to allow the updates from
-# Example: ALLOW_FROM = ["192.168.10.0/24", "::1/128"]
-ALLOW_FROM = []
-# Force re-registration. Overwrites the already existing acme-dns accounts.
-FORCE_REGISTER = False
+```
+{
+    "url": "https://custom.example.com",
+    "allow_from": ["192.168.1.0/24", "10.0.0.0/8"],
+    "force_register": true
+}
+```
+
+Equivalent environment variables that need to be setup before running certbot:
+
+```
+ACMEDNS_URL="https://custom.example.com"
+ACMEDNS_ALLOW_FROM='["192.168.1.0/24", "10.0.0.0/8"]'
+ACMEDNS_FORCE_REGISTER=true
 ```
 
 ## Usage
 
 On initial run:
 ```
-$ certbot certonly --manual --manual-auth-hook /etc/letsencrypt/acme-dns-auth.py \
+$ certbot certonly --manual --manual-auth-hook /etc/letsencrypt/acme_dns_auth.py \
    --preferred-challenges dns --debug-challenges                                 \
    -d example.org -d \*.example.org
 ```
