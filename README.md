@@ -14,8 +14,8 @@ Requires Certbot >= 0.10, Python requests library.
 
 3) Download the authentication hook script and make it executable:
 ```
-$ curl -o /etc/letsencrypt/acme-dns-auth.py https://raw.githubusercontent.com/p12tic/acme-dns-certbot-hook/master/acme-dns-auth.py
-$ chmod 0700 /etc/letsencrypt/acme-dns-auth.py
+$ curl -o /etc/letsencrypt/acme_dns_auth.py https://raw.githubusercontent.com/p12tic/acme-dns-certbot-hook/master/acme_dns_auth.py
+$ chmod 0700 /etc/letsencrypt/acme_dns_auth.py
 ```
 
 4) Configure the hook script file to point to your acme-dns instance. Either put configuration file at `/etc/letsencrypt/acme-dns-certbot-hook-config.json`, or pass configuration via environment variables. Example contents of `/etc/letsencrypt/acme-dns-certbot-hook-config.json`:
@@ -40,7 +40,7 @@ ACMEDNS_FORCE_REGISTER=true
 
 On initial run:
 ```
-$ certbot certonly --manual --manual-auth-hook /etc/letsencrypt/acme-dns-auth.py \
+$ certbot certonly --manual --manual-auth-hook /etc/letsencrypt/acme_dns_auth.py \
    --preferred-challenges dns --debug-challenges                                 \
    -d example.org -d \*.example.org
 ```
