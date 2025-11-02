@@ -45,4 +45,4 @@ Note that the `--debug-challenges` is mandatory here to pause the Certbot execut
 
 After adding the prompted CNAME records to your zone(s), wait for a bit for the changes to propagate over the main DNS zone name servers. This takes anywhere from few seconds up to a few minutes, depending on the DNS service provider software and configuration. Hit enter to continue as prompted to ask Let's Encrypt to validate the records.
 
-After the initial run, Certbot is able to automatically renew your certificates using the stored per-domain acme-dns credentials. 
+After the initial run, Certbot is able to automatically renew your certificates using the stored per-domain acme-dns credentials.
