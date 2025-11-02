@@ -2,6 +2,9 @@ name: Lint and Type Check
 
 on:
   pull_request:
+  push:
+    branches:
+      - master
 
 jobs:
   lint:
