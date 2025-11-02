@@ -21,12 +21,6 @@ FORCE_REGISTER = False
 ###   DO NOT EDIT BELOW THIS POINT   ###
 ###         HERE BE DRAGONS          ###
 
-DOMAIN = os.environ['CERTBOT_DOMAIN']
-if DOMAIN.startswith('*.'):
-    DOMAIN = DOMAIN[2:]
-VALIDATION_DOMAIN = '_acme-challenge.' + DOMAIN
-VALIDATION_TOKEN = os.environ['CERTBOT_VALIDATION']
-
 
 class AcmeDnsClient:
     """
@@ -134,25 +128,31 @@ class Storage:
 
 def main() -> None:
     try:
+        domain = os.environ['CERTBOT_DOMAIN']
+        if domain.startswith('*.'):
+            domain = domain[2:]
+        validation_domain = '_acme-challenge.' + domain
+        validation_token = os.environ['CERTBOT_VALIDATION']
+
         # Init
         client = AcmeDnsClient(ACMEDNS_URL)
         storage = Storage(STORAGE_PATH)
 
         # Check if an account already exists in storage
-        account = storage.fetch(DOMAIN)
+        account = storage.fetch(domain)
         if FORCE_REGISTER or not account:
             # Create and save the new account
             account = client.register_account(ALLOW_FROM)
-            storage.put(DOMAIN, account)
+            storage.put(domain, account)
             storage.save()
 
             # Display the notification for the user to update the main zone
             msg = 'Please add the following CNAME record to your main DNS zone:\n{}'
-            cname = '{}. CNAME {}.'.format(VALIDATION_DOMAIN, account['fulldomain'])
+            cname = '{}. CNAME {}.'.format(validation_domain, account['fulldomain'])
             print(msg.format(cname))
 
         # Update the TXT record in acme-dns instance
-        client.update_txt_record(account, VALIDATION_TOKEN)
+        client.update_txt_record(account, validation_token)
     except Exception as e:
         print(str(e))
         sys.exit(1)
