@@ -97,12 +97,9 @@ class Storage:
         return data
 
     def save(self) -> None:
-        """Saves the storage content to disk"""
-        serialized = json.dumps(self._data)
         try:
-            with os.fdopen(os.open(self.storagepath, os.O_WRONLY | os.O_CREAT, 0o600), 'w') as fh:
-                fh.truncate()
-                fh.write(serialized)
+            with open(self.storagepath, 'w') as f:
+                json.dump(self._data, f)
         except OSError as e:
             raise RuntimeError('ERROR: Could not write storage file.') from e
 
