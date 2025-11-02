@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+from typing import Any
 
 import requests
 
@@ -13,7 +14,7 @@ ACMEDNS_URL = 'https://auth.acme-dns.io'
 STORAGE_PATH = '/etc/letsencrypt/acmedns.json'
 # Whitelist for address ranges to allow the updates from
 # Example: ALLOW_FROM = ["192.168.10.0/24", "::1/128"]
-ALLOW_FROM = []
+ALLOW_FROM: list[str] = []
 # Force re-registration. Overwrites the already existing acme-dns accounts.
 FORCE_REGISTER = False
 
@@ -32,10 +33,10 @@ class AcmeDnsClient:
     Handles the communication with ACME-DNS API
     """
 
-    def __init__(self, acmedns_url):
+    def __init__(self, acmedns_url: str) -> None:
         self.acmedns_url = acmedns_url
 
-    def register_account(self, allowfrom):
+    def register_account(self, allowfrom: list[str]) -> Any:
         """Registers a new ACME-DNS account"""
 
         if allowfrom:
@@ -56,7 +57,7 @@ class AcmeDnsClient:
             print(msg.format(res.status_code, res.text))
             sys.exit(1)
 
-    def update_txt_record(self, account, txt):
+    def update_txt_record(self, account: dict[str, str], txt: str) -> None:
         """Updates the TXT challenge record to ACME-DNS subdomain."""
         update = {'subdomain': account['subdomain'], 'txt': txt}
         headers = {
@@ -85,11 +86,11 @@ class AcmeDnsClient:
 
 
 class Storage:
-    def __init__(self, storagepath):
+    def __init__(self, storagepath: str) -> None:
         self.storagepath = storagepath
         self._data = self.load()
 
-    def load(self):
+    def load(self) -> dict:
         """Reads the storage content from the disk to a dict structure"""
         data = dict()
         filedata = ''
@@ -110,7 +111,7 @@ class Storage:
                 sys.exit(1)
         return data
 
-    def save(self):
+    def save(self) -> None:
         """Saves the storage content to disk"""
         serialized = json.dumps(self._data)
         try:
@@ -121,7 +122,7 @@ class Storage:
             print('ERROR: Could not write storage file.')
             sys.exit(1)
 
-    def put(self, key, value):
+    def put(self, key: str, value: Any) -> None:
         """Puts the configuration value to storage and sanitize it"""
         # If wildcard domain, remove the wildcard part as this will use the
         # same validation record name as the base domain
@@ -129,7 +130,7 @@ class Storage:
             key = key[2:]
         self._data[key] = value
 
-    def fetch(self, key):
+    def fetch(self, key: str) -> Any | None:
         """Gets configuration value from storage"""
         try:
             return self._data[key]
