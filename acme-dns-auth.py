@@ -138,7 +138,7 @@ class Storage:
             return None
 
 
-if __name__ == '__main__':
+def main() -> None:
     # Init
     client = AcmeDnsClient(ACMEDNS_URL)
     storage = Storage(STORAGE_PATH)
@@ -158,3 +158,7 @@ if __name__ == '__main__':
 
     # Update the TXT record in acme-dns instance
     client.update_txt_record(account, VALIDATION_TOKEN)
+
+
+if __name__ == '__main__':
+    main()
