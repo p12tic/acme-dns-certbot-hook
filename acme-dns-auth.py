@@ -54,8 +54,7 @@ class AcmeDnsClient:
                 'Encountered an error while trying to register a new acme-dns '
                 'account. HTTP status {}, Response body: {}'
             )
-            print(msg.format(res.status_code, res.text))
-            sys.exit(1)
+            raise RuntimeError(msg.format(res.status_code, res.text))
 
     def update_txt_record(self, account: dict[str, str], txt: str) -> None:
         """Updates the TXT challenge record to ACME-DNS subdomain."""
@@ -81,8 +80,7 @@ class AcmeDnsClient:
             s_headers = json.dumps(headers, indent=2, sort_keys=True)
             s_update = json.dumps(update, indent=2, sort_keys=True)
             s_body = json.dumps(res.json(), indent=2, sort_keys=True)
-            print(msg.format(s_headers, s_update, res.status_code, s_body))
-            sys.exit(1)
+            raise RuntimeError(msg.format(s_headers, s_update, res.status_code, s_body))
 
 
 class Storage:
@@ -97,18 +95,15 @@ class Storage:
         try:
             with open(self.storagepath) as fh:
                 filedata = fh.read()
-        except OSError:
+        except OSError as e:
             if os.path.isfile(self.storagepath):
                 # Only error out if file exists, but cannot be read
-                print('ERROR: Storage file exists but cannot be read')
-                sys.exit(1)
+                raise ValueError('ERROR: Storage file exists but cannot be read') from e
         try:
             data = json.loads(filedata)
         except ValueError:
             if len(filedata) > 0:
-                # Storage file is corrupted
-                print('ERROR: Storage JSON is corrupted')
-                sys.exit(1)
+                raise RuntimeError('ERROR: Storage JSON is corrupted')
         return data
 
     def save(self) -> None:
@@ -118,9 +113,8 @@ class Storage:
             with os.fdopen(os.open(self.storagepath, os.O_WRONLY | os.O_CREAT, 0o600), 'w') as fh:
                 fh.truncate()
                 fh.write(serialized)
-        except OSError:
-            print('ERROR: Could not write storage file.')
-            sys.exit(1)
+        except OSError as e:
+            raise RuntimeError('ERROR: Could not write storage file.') from e
 
     def put(self, key: str, value: Any) -> None:
         """Puts the configuration value to storage and sanitize it"""
@@ -138,23 +132,31 @@ class Storage:
             return None
 
 
+def main() -> None:
+    try:
+        # Init
+        client = AcmeDnsClient(ACMEDNS_URL)
+        storage = Storage(STORAGE_PATH)
+
+        # Check if an account already exists in storage
+        account = storage.fetch(DOMAIN)
+        if FORCE_REGISTER or not account:
+            # Create and save the new account
+            account = client.register_account(ALLOW_FROM)
+            storage.put(DOMAIN, account)
+            storage.save()
+
+            # Display the notification for the user to update the main zone
+            msg = 'Please add the following CNAME record to your main DNS zone:\n{}'
+            cname = '{}. CNAME {}.'.format(VALIDATION_DOMAIN, account['fulldomain'])
+            print(msg.format(cname))
+
+        # Update the TXT record in acme-dns instance
+        client.update_txt_record(account, VALIDATION_TOKEN)
+    except Exception as e:
+        print(str(e))
+        sys.exit(1)
+
+
 if __name__ == '__main__':
-    # Init
-    client = AcmeDnsClient(ACMEDNS_URL)
-    storage = Storage(STORAGE_PATH)
-
-    # Check if an account already exists in storage
-    account = storage.fetch(DOMAIN)
-    if FORCE_REGISTER or not account:
-        # Create and save the new account
-        account = client.register_account(ALLOW_FROM)
-        storage.put(DOMAIN, account)
-        storage.save()
-
-        # Display the notification for the user to update the main zone
-        msg = 'Please add the following CNAME record to your main DNS zone:\n{}'
-        cname = '{}. CNAME {}.'.format(VALIDATION_DOMAIN, account['fulldomain'])
-        print(msg.format(cname))
-
-    # Update the TXT record in acme-dns instance
-    client.update_txt_record(account, VALIDATION_TOKEN)
+    main()
