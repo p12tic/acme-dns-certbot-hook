@@ -7,7 +7,7 @@ from typing import Any
 
 import requests
 
-DATA_STORAGE_PATH = '/etc/letsencrypt/acmedns.json'
+DATA_STORAGE_PATH = '/etc/letsencrypt/acme-dns-certbot-hook-data.json'
 
 
 @dataclass
