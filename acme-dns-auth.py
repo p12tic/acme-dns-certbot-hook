@@ -43,12 +43,10 @@ class AcmeDnsClient:
             # The request was successful
             return res.json()
         else:
-            # Encountered an error
-            msg = (
+            raise RuntimeError(
                 'Encountered an error while trying to register a new acme-dns '
-                'account. HTTP status {}, Response body: {}'
+                f'account. HTTP status {res.status_code}, Response body: {res.text}'
             )
-            raise RuntimeError(msg.format(res.status_code, res.text))
 
     def update_txt_record(self, account: dict[str, str], txt: str) -> None:
         """Updates the TXT challenge record to ACME-DNS subdomain."""
@@ -63,18 +61,16 @@ class AcmeDnsClient:
             # Successful update
             return
         else:
-            msg = (
-                'Encountered an error while trying to update TXT record in '
-                'acme-dns. \n'
-                '------- Request headers:\n{}\n'
-                '------- Request body:\n{}\n'
-                '------- Response HTTP status: {}\n'
-                '------- Response body: {}'
-            )
             s_headers = json.dumps(headers, indent=2, sort_keys=True)
             s_update = json.dumps(update, indent=2, sort_keys=True)
             s_body = json.dumps(res.json(), indent=2, sort_keys=True)
-            raise RuntimeError(msg.format(s_headers, s_update, res.status_code, s_body))
+            raise RuntimeError(
+                'Encountered an error while trying to update TXT record in acme-dns. \n'
+                f'------- Request headers:\n{s_headers}\n'
+                f'------- Request body:\n{s_update}\n'
+                f'------- Response HTTP status: {res.status_code}\n'
+                f'------- Response body: {s_body}'
+            )
 
 
 class Storage:
@@ -146,10 +142,10 @@ def main() -> None:
             storage.put(domain, account)
             storage.save()
 
-            # Display the notification for the user to update the main zone
-            msg = 'Please add the following CNAME record to your main DNS zone:\n{}'
-            cname = '{}. CNAME {}.'.format(validation_domain, account['fulldomain'])
-            print(msg.format(cname))
+            print(
+                'Please add the following CNAME record to your main DNS zone:\n'
+                + f'{validation_domain}. CNAME {account["fulldomain"]}.'
+            )
 
         # Update the TXT record in acme-dns instance
         client.update_txt_record(account, validation_token)
