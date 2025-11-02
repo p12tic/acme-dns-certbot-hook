@@ -11,12 +11,12 @@ import requests
 # URL to acme-dns instance
 ACMEDNS_URL = os.environ.get('ACMEDNS_URL', 'https://auth.acme-dns.io')
 # Path for acme-dns credential storage
-STORAGE_PATH = os.environ.get('STORAGE_PATH', '/etc/letsencrypt/acmedns.json')
+STORAGE_PATH = os.environ.get('ACMEDNS_STORAGE_PATH', '/etc/letsencrypt/acmedns.json')
 # Whitelist for address ranges to allow the updates from
 # Example: ALLOW_FROM = ["192.168.10.0/24", "::1/128"]
-ALLOW_FROM: list[str] = os.environ.get('ALLOW_FROM', [])
+ALLOW_FROM: list[str] = os.environ.get('ACMEDNS_ALLOW_FROM', [])
 # Force re-registration. Overwrites the already existing acme-dns accounts.
-FORCE_REGISTER = os.environ.get('FORCE_REGISTER', False)
+FORCE_REGISTER = os.environ.get('ACMEDNS_FORCE_REGISTER', False)
 
 ###   DO NOT EDIT BELOW THIS POINT   ###
 ###         HERE BE DRAGONS          ###
