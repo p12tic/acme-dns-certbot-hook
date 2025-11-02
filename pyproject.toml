@@ -1,0 +1,38 @@
+[project]
+name = "acme-dns-certbot-hook"
+version = "0.1.0"
+description = "A certbot hook for acme-dns"
+authors = []
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.2",
+    "ruff>=0.14.3",
+]
+
+[tool.setuptools]
+py-modules = []
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint.isort]
+force-single-line = true
+
+[tool.ruff.format]
+preview = true # needed for quote-style
+quote-style = "single"
+
+[tool.ruff.lint]
+select = ["UP", "F", "I001"]
+
+[tool.mypy]
+python_version = "3.11"
+namespace_packages = true
+pretty = true
+warn_redundant_casts = true
+disallow_untyped_calls = false
+disallow_untyped_defs = true
+no_implicit_optional = true
+
