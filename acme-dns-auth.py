@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import json
 import os
-import requests
 import sys
+
+import requests
 
 ### EDIT THESE: Configuration values ###
 
@@ -26,7 +27,7 @@ VALIDATION_DOMAIN = '_acme-challenge.' + DOMAIN
 VALIDATION_TOKEN = os.environ['CERTBOT_VALIDATION']
 
 
-class AcmeDnsClient(object):
+class AcmeDnsClient:
     """
     Handles the communication with ACME-DNS API
     """
@@ -83,7 +84,7 @@ class AcmeDnsClient(object):
             sys.exit(1)
 
 
-class Storage(object):
+class Storage:
     def __init__(self, storagepath):
         self.storagepath = storagepath
         self._data = self.load()
@@ -93,9 +94,9 @@ class Storage(object):
         data = dict()
         filedata = ''
         try:
-            with open(self.storagepath, 'r') as fh:
+            with open(self.storagepath) as fh:
                 filedata = fh.read()
-        except IOError as e:
+        except OSError:
             if os.path.isfile(self.storagepath):
                 # Only error out if file exists, but cannot be read
                 print('ERROR: Storage file exists but cannot be read')
@@ -116,7 +117,7 @@ class Storage(object):
             with os.fdopen(os.open(self.storagepath, os.O_WRONLY | os.O_CREAT, 0o600), 'w') as fh:
                 fh.truncate()
                 fh.write(serialized)
-        except IOError as e:
+        except OSError:
             print('ERROR: Could not write storage file.')
             sys.exit(1)
 
