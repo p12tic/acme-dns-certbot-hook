@@ -2,24 +2,27 @@
 import json
 import os
 import sys
+from dataclasses import dataclass
 from typing import Any
 
 import requests
 
-### EDIT THESE: Configuration values ###
 
-# URL to acme-dns instance
-ACMEDNS_URL = os.environ.get('ACMEDNS_URL', 'https://auth.acme-dns.io')
-# Path for acme-dns credential storage
-STORAGE_PATH = os.environ.get('ACMEDNS_STORAGE_PATH', '/etc/letsencrypt/acmedns.json')
-# Whitelist for address ranges to allow the updates from
-# Example: ALLOW_FROM = ["192.168.10.0/24", "::1/128"]
-ALLOW_FROM: list[str] = os.environ.get('ACMEDNS_ALLOW_FROM', [])
-# Force re-registration. Overwrites the already existing acme-dns accounts.
-FORCE_REGISTER = os.environ.get('ACMEDNS_FORCE_REGISTER', False)
+@dataclass
+class AcmeDnsConfig:
+    url: str
+    storage_path: str
+    allow_from: list[str]
+    force_register: bool
 
-###   DO NOT EDIT BELOW THIS POINT   ###
-###         HERE BE DRAGONS          ###
+
+def build_acme_dns_config_from_env() -> AcmeDnsConfig:
+    return AcmeDnsConfig(
+        url=os.environ.get('ACMEDNS_URL', 'https://auth.acme-dns.io'),
+        storage_path=os.environ.get('ACMEDNS_STORAGE_PATH', '/etc/letsencrypt/acmedns.json'),
+        allow_from=json.loads(os.environ.get('ACMEDNS_ALLOW_FROM', '[]')),
+        force_register=json.loads(os.environ.get('ACMEDNS_FORCE_REGISTER', 'false')),
+    )
 
 
 class AcmeDnsClient:
@@ -127,15 +130,17 @@ def main() -> None:
         validation_domain = '_acme-challenge.' + domain
         validation_token = os.environ['CERTBOT_VALIDATION']
 
+        config = build_acme_dns_config_from_env()
+
         # Init
-        client = AcmeDnsClient(ACMEDNS_URL)
-        storage = Storage(STORAGE_PATH)
+        client = AcmeDnsClient(config.url)
+        storage = Storage(config.storage_path)
 
         # Check if an account already exists in storage
         account = storage.fetch(domain)
-        if FORCE_REGISTER or not account:
+        if config.force_register or not account:
             # Create and save the new account
-            account = client.register_account(ALLOW_FROM)
+            account = client.register_account(config.allow_from)
             storage.put(domain, account)
             storage.save()
 
