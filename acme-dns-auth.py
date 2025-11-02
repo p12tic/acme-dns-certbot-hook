@@ -7,11 +7,12 @@ from typing import Any
 
 import requests
 
+DATA_STORAGE_PATH = '/etc/letsencrypt/acmedns.json'
+
 
 @dataclass
 class AcmeDnsConfig:
     url: str
-    storage_path: str
     allow_from: list[str]
     force_register: bool
 
@@ -19,7 +20,6 @@ class AcmeDnsConfig:
 def build_acme_dns_config_from_env() -> AcmeDnsConfig:
     return AcmeDnsConfig(
         url=os.environ.get('ACMEDNS_URL', 'https://auth.acme-dns.io'),
-        storage_path=os.environ.get('ACMEDNS_STORAGE_PATH', '/etc/letsencrypt/acmedns.json'),
         allow_from=json.loads(os.environ.get('ACMEDNS_ALLOW_FROM', '[]')),
         force_register=json.loads(os.environ.get('ACMEDNS_FORCE_REGISTER', 'false')),
     )
@@ -134,7 +134,7 @@ def main() -> None:
 
         # Init
         client = AcmeDnsClient(config.url)
-        storage = Storage(config.storage_path)
+        storage = Storage(DATA_STORAGE_PATH)
 
         # Check if an account already exists in storage
         account = storage.fetch(domain)
