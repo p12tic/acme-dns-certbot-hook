@@ -3,6 +3,9 @@ name = "acme-dns-certbot-hook"
 version = "0.1.0"
 description = "A certbot hook for acme-dns"
 authors = []
+dependencies = [
+    "requests>=2.32.5",
+]
 
 [dependency-groups]
 dev = [
